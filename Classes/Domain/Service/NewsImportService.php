@@ -3,16 +3,10 @@
 namespace GeorgRinger\News\Domain\Service;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
 use GeorgRinger\News\Domain\Model\FileReference;
 use GeorgRinger\News\Domain\Model\Link;
@@ -24,7 +18,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class NewsImportService extends AbstractImportService
 {
-
     const ACTION_IMPORT_L10N_OVERLAY = 1;
 
     /**
@@ -64,7 +57,6 @@ class NewsImportService extends AbstractImportService
      * Inject the news repository
      *
      * @param \GeorgRinger\News\Domain\Repository\NewsRepository $newsRepository
-     * @return void
      */
     public function injectNewsRepository(\GeorgRinger\News\Domain\Repository\NewsRepository $newsRepository)
     {
@@ -75,7 +67,6 @@ class NewsImportService extends AbstractImportService
      * Inject the category repository
      *
      * @param \GeorgRinger\News\Domain\Repository\CategoryRepository $categoryRepository
-     * @return void
      */
     public function injectCategoryRepository(\GeorgRinger\News\Domain\Repository\CategoryRepository $categoryRepository)
     {
@@ -86,7 +77,6 @@ class NewsImportService extends AbstractImportService
      * Inject the ttcontent repository
      *
      * @param \GeorgRinger\News\Domain\Repository\TtContentRepository $ttContentRepository
-     * @return void
      */
     public function injectTtContentRepository(
         \GeorgRinger\News\Domain\Repository\TtContentRepository $ttContentRepository
@@ -98,7 +88,6 @@ class NewsImportService extends AbstractImportService
      * Inject SignalSlotDispatcher
      *
      * @var \TYPO3\CMS\Extbase\SignalSlot\Dispatcher $signalSlotDispatcher
-     * @return void
      */
     public function injectSignalSlotDispatcher(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher $signalSlotDispatcher)
     {
@@ -151,7 +140,9 @@ class NewsImportService extends AbstractImportService
         $news->setHidden($importItem['hidden']);
         $news->setStarttime($importItem['starttime']);
         $news->setEndtime($importItem['endtime']);
-        $news->setFeGroup((string)$importItem['fe_group']);
+        if (!empty($importItem['fe_group'])) {
+            $news->setFeGroup((string)$importItem['fe_group']);
+        }
         $news->setTstamp($importItem['tstamp']);
         $news->setCrdate($importItem['crdate']);
         $news->setSysLanguageUid($importItem['sys_language_uid']);
@@ -166,8 +157,7 @@ class NewsImportService extends AbstractImportService
         $news->setDatetime(new \DateTime(date('Y-m-d H:i:sP', $importItem['datetime'])));
         $news->setArchive(new \DateTime(date('Y-m-d H:i:sP', $importItem['archive'])));
 
-        $contentElementUidArray = \TYPO3\CMS\Extbase\Utility\ArrayUtility::trimExplode(',',
-            $importItem['content_elements'], true);
+        $contentElementUidArray = GeneralUtility::trimExplode(',', $importItem['content_elements'], true);
         foreach ($contentElementUidArray as $contentElementUid) {
             if (is_object($contentElement = $this->ttContentRepository->findByUid($contentElementUid))) {
                 $news->addContentElement($contentElement);
@@ -320,7 +310,6 @@ class NewsImportService extends AbstractImportService
      * @param array $importData
      * @param array $importItemOverwrite
      * @param array $settings
-     * @return void
      */
     public function import(array $importData, array $importItemOverwrite = [], $settings = [])
     {
@@ -328,6 +317,9 @@ class NewsImportService extends AbstractImportService
         $this->logger->info(sprintf('Starting import for %s news', count($importData)));
 
         foreach ($importData as $importItem) {
+            $arguments = ['importItem' => $importItem];
+            $return = $this->emitSignal('preHydrate', $arguments);
+            $importItem = $return['importItem'];
 
             // Store language overlay in post persist queue
             if ((int)$importItem['sys_language_uid'] > 0 && (string)$importItem['l10n_parent'] !== '0') {
@@ -358,7 +350,6 @@ class NewsImportService extends AbstractImportService
     /**
      * @param array $queueItem
      * @param array $importItemOverwrite
-     * @return void
      */
     protected function importL10nOverlay(array $queueItem, array $importItemOverwrite)
     {
@@ -439,7 +430,7 @@ class NewsImportService extends AbstractImportService
      */
     protected function emitSignal($signalName, array $signalArguments)
     {
-        $this->signalSlotDispatcher->dispatch('GeorgRinger\\News\\Domain\\Service\\NewsImportService', $signalName,
+        return $this->signalSlotDispatcher->dispatch('GeorgRinger\\News\\Domain\\Service\\NewsImportService', $signalName,
             $signalArguments);
     }
 }

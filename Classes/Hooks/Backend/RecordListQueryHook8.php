@@ -3,16 +3,10 @@
 namespace GeorgRinger\News\Hooks\Backend;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
 use GeorgRinger\News\Backend\RecordList\RecordListConstraint;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -37,7 +31,6 @@ class RecordListQueryHook8
     {
         $this->recordListConstraint = GeneralUtility::makeInstance(RecordListConstraint::class);
     }
-
 
     public function buildQueryParametersPostProcess(
         array &$parameters,
@@ -69,7 +62,7 @@ class RecordListQueryHook8
                 }
                 self::$count++;
             }
-        }  elseif ($table === 'tx_news_domain_model_news' && $this->recordListConstraint->isInAdministrationModule()) {
+        } elseif ($table === 'tx_news_domain_model_news' && $this->recordListConstraint->isInAdministrationModule()) {
             $vars = GeneralUtility::_GET('tx_news_web_newstxnewsm2');
             if (is_array($vars) && is_array($vars['demand'])) {
                 $vars = $vars['demand'];

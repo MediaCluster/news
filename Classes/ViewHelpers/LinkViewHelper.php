@@ -3,16 +3,10 @@
 namespace GeorgRinger\News\ViewHelpers;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
 use GeorgRinger\News\Domain\Model\News;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
@@ -77,7 +71,6 @@ class LinkViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedVi
 
     /**
      * @param \GeorgRinger\News\Service\SettingsService $pluginSettingsService
-     * @return void
      */
     public function injectSettingsService(\GeorgRinger\News\Service\SettingsService $pluginSettingsService)
     {
@@ -104,6 +97,7 @@ class LinkViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedVi
      */
     public function render()
     {
+        /** @var News $newsItem */
         $newsItem = $this->arguments['newsItem'];
         $settings = $this->arguments['settings'];
         $uriOnly = $this->arguments['uriOnly'];
@@ -114,6 +108,10 @@ class LinkViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedVi
         ArrayUtility::mergeRecursiveWithOverrule($tsSettings, (array)$settings);
 
         $this->init();
+
+        if (is_null($newsItem)) {
+            return $this->renderChildren();
+        }
 
         $newsType = (int)$newsItem->getType();
         switch ($newsType) {
@@ -174,8 +172,7 @@ class LinkViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedVi
         News $newsItem,
         $tsSettings,
         array $configuration = []
-    )
-    {
+    ) {
         if (!isset($configuration['parameter'])) {
             $detailPid = 0;
             $detailPidDeterminationMethods = GeneralUtility::trimExplode(',', $tsSettings['detailPidDetermination'],
@@ -304,7 +301,6 @@ class LinkViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedVi
     /**
      * Initialize properties
      *
-     * @return void
      */
     protected function init()
     {

@@ -3,17 +3,13 @@
 namespace GeorgRinger\News\Hooks;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
+use GeorgRinger\News\Domain\Model\Dto\EmConfiguration;
+use TYPO3\CMS\Backend\Utility\BackendUtility as BackendUtilityCore;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -102,6 +98,14 @@ class BackendUtility
         'template' => 'cropMaxCharacters,media.maxWidth,media.maxHeight'
     ];
 
+    /** @var EmConfiguration */
+    protected $configuration;
+
+    public function __construct()
+    {
+        $this->configuration = \GeorgRinger\News\Utility\EmConfiguration::getSettings();
+    }
+
     /**
      * Hook function of \TYPO3\CMS\Backend\Utility\BackendUtility
      * It is used to change the flexform if it is about news
@@ -110,12 +114,15 @@ class BackendUtility
      * @param array $conf some strange configuration
      * @param array $row row of current record
      * @param string $table table name
-     * @return void
      */
     public function getFlexFormDS_postProcessDS(&$dataStructure, $conf, $row, $table)
     {
-        if ($table === 'tt_content' && $row['list_type'] === 'news_pi1' && is_array($dataStructure)) {
+        if ($table === 'tt_content' && $row['CType'] === 'list' && $row['list_type'] === 'news_pi1' && is_array($dataStructure)) {
             $this->updateFlexforms($dataStructure, $row);
+
+            if ($this->enabledInTsConfig($row['pid'])) {
+                $this->addCategoryConstraints($dataStructure);
+            }
         }
     }
 
@@ -124,7 +131,6 @@ class BackendUtility
      *
      * @param array|string &$dataStructure flexform structure
      * @param array $row row of current record
-     * @return void
      */
     protected function updateFlexforms(array &$dataStructure, array $row)
     {
@@ -187,11 +193,36 @@ class BackendUtility
     }
 
     /**
+     * Add category restriction to flexforms
+     *
+     * @param array $structure
+     */
+    protected function addCategoryConstraints(&$structure)
+    {
+        $categoryRestrictionSetting = $this->configuration->getCategoryRestriction();
+        $categoryRestriction = '';
+        switch ($categoryRestrictionSetting) {
+            case 'current_pid':
+                $categoryRestriction = ' AND sys_category.pid=###CURRENT_PID### ';
+                break;
+            case 'siteroot':
+                $categoryRestriction = ' AND sys_category.pid IN (###SITEROOT###) ';
+                break;
+            case 'page_tsconfig':
+                $categoryRestriction = ' AND sys_category.pid IN (###PAGE_TSCONFIG_IDLIST###) ';
+                break;
+        }
+
+        if (!empty($categoryRestriction) && isset($structure['sheets']['sDEF']['ROOT']['el']['settings.categories'])) {
+            $structure['sheets']['sDEF']['ROOT']['el']['settings.categories']['TCEforms']['config']['foreign_table_where'] = $categoryRestriction . $structure['sheets']['sDEF']['ROOT']['el']['settings.categories']['TCEforms']['config']['foreign_table_where'];
+        }
+    }
+
+    /**
      * Remove fields from flexform structure
      *
      * @param array &$dataStructure flexform structure
      * @param array $fieldsToBeRemoved fields which need to be removed
-     * @return void
      */
     protected function deleteFromStructure(array &$dataStructure, array $fieldsToBeRemoved)
     {
@@ -202,5 +233,18 @@ class BackendUtility
                 unset($dataStructure['sheets'][$sheetName]['ROOT']['el']['settings.' . $fieldName]);
             }
         }
+    }
+
+    /**
+     * @param int $pageId
+     * @return bool
+     */
+    protected function enabledInTsConfig($pageId)
+    {
+        $tsConfig = BackendUtilityCore::getPagesTSconfig($pageId);
+        if (isset($tsConfig['tx_news.']['categoryRestrictionForFlexForms'])) {
+            return (bool)$tsConfig['tx_news.']['categoryRestrictionForFlexForms'];
+        }
+        return false;
     }
 }

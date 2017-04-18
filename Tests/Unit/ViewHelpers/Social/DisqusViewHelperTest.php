@@ -3,33 +3,26 @@
 namespace GeorgRinger\News\Tests\Unit\ViewHelpers\Social;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
 use GeorgRinger\News\Domain\Model\News;
 use GeorgRinger\News\ViewHelpers\Social\DisqusViewHelper;
+use Nimut\TestingFramework\TestCase\UnitTestCase;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Tests for DisqusSizeViewHelper
- *
  */
-class DisqusViewHelperTest extends \TYPO3\CMS\Core\Tests\UnitTestCase
+class DisqusViewHelperTest extends UnitTestCase
 {
 
     /**
      * Test if default file format works
      *
      * @test
-     * @return void
      */
     public function viewHelperReturnsCorrectJs()
     {

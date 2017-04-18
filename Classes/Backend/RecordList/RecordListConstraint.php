@@ -1,18 +1,13 @@
 <?php
 namespace GeorgRinger\News\Backend\RecordList;
 
-/*
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+/**
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
+use GeorgRinger\News\Service\CategoryService;
 use GeorgRinger\News\Utility\ConstraintHelper;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\DatabaseConnection;
@@ -23,7 +18,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class RecordListConstraint
 {
-
     const TABLE = 'tx_news_domain_model_news';
 
     /**
@@ -52,6 +46,27 @@ class RecordListConstraint
                 $parameters['where'][] = 'istopnews=1';
             } elseif ($topNewsSetting === 2) {
                 $parameters['where'][] = 'istopnews=0';
+            }
+        }
+
+        // archived (1==active, 2==archived)
+        $archived = (int)$arguments['archived'];
+        if ($archived > 0) {
+            $currentTime = $GLOBALS['EXEC_TIME'];
+            if ($archived === 1) {
+                $parameters['where'][] = '(archive > ' . $currentTime . ' OR archive=0)';
+            } elseif ($archived === 2) {
+                $parameters['where'][] = 'archive > 0 AND archive <' . $currentTime;
+            }
+        }
+
+        // hidden
+        $hidden = (int)$arguments['hidden'];
+        if ($hidden > 0) {
+            if ($hidden === 1) {
+                $parameters['where'][] = 'hidden=1';
+            } elseif ($hidden === 2) {
+                $parameters['where'][] = 'hidden=0';
             }
         }
 
@@ -84,6 +99,11 @@ class RecordListConstraint
                 }
             }
             if (!empty($arguments['selectedCategories'])) {
+                if ((int)$arguments['includeSubCategories'] === 1) {
+                    $categoryList = implode(',', $arguments['selectedCategories']);
+                    $listWithSubCategories = CategoryService::getChildrenCategories($categoryList);
+                    $arguments['selectedCategories'] = explode(',', $listWithSubCategories);
+                }
                 switch ($categoryMode) {
                     case 'and':
                         foreach ($arguments['selectedCategories'] as $category) {
@@ -141,7 +161,7 @@ class RecordListConstraint
         // order
         if (isset($arguments['sortingField']) && isset($GLOBALS['TCA']['tx_news_domain_model_news']['columns'][$arguments['sortingField']])) {
             $direction = ($arguments['sortingDirection'] === 'asc' || $arguments['sortingDirection'] === 'desc') ? $arguments['sortingDirection'] : '';
-            $parameters['orderBy'] = array(array($arguments['sortingField'], $direction));
+            $parameters['orderBy'] = [[$arguments['sortingField'], $direction]];
         }
     }
 
@@ -174,7 +194,6 @@ class RecordListConstraint
 
         return $idList;
     }
-
 
     /**
      * @return DatabaseConnection

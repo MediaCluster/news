@@ -3,16 +3,10 @@
 namespace GeorgRinger\News\Hooks;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
 use GeorgRinger\News\Utility\TemplateLayout;
 use TYPO3\CMS\Backend\Template\DocumentTemplate;
@@ -23,6 +17,7 @@ use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
 
 /**
@@ -148,6 +143,7 @@ class PageLayoutView
                         $this->getTemplateLayoutSettings($params['row']['pid']);
                         break;
                     default:
+                        $this->getTemplateLayoutSettings($params['row']['pid']);
                 }
 
                 if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXT']['news']['GeorgRinger\\News\\Hooks\\PageLayoutView']['extensionSummary'])) {
@@ -172,7 +168,6 @@ class PageLayoutView
     /**
      * Render archive settings
      *
-     * @return void
      */
     public function getArchiveSettings()
     {
@@ -189,7 +184,6 @@ class PageLayoutView
     /**
      * Render single news settings
      *
-     * @return void
      */
     public function getSingleNewsSettings()
     {
@@ -224,7 +218,6 @@ class PageLayoutView
     /**
      * Render single news settings
      *
-     * @return void
      */
     public function getDetailPidSetting()
     {
@@ -243,7 +236,6 @@ class PageLayoutView
     /**
      * Render listPid news settings
      *
-     * @return void
      */
     public function getListPidSetting()
     {
@@ -299,7 +291,7 @@ class PageLayoutView
                 $content .= $linkTitle;
             }
         } else {
-            $text = sprintf($this->getLanguageService()->sL(self::LLPATH . 'pagemodule.pageNotAvailable'),
+            $text = sprintf($this->getLanguageService()->sL(self::LLPATH . 'pagemodule.recordNotAvailable'),
                 $id);
             $content = $this->generateCallout($text);
         }
@@ -310,7 +302,6 @@ class PageLayoutView
     /**
      * Get order settings
      *
-     * @return void
      */
     public function getOrderSettings()
     {
@@ -374,51 +365,55 @@ class PageLayoutView
      * Render category settings
      *
      * @param bool $showCategoryMode show the category conjunction
-     * @return void
      */
     public function getCategorySettings($showCategoryMode = true)
     {
-        $categoryMode = '';
-        $categoriesOut = [];
-
         $categories = GeneralUtility::intExplode(',', $this->getFieldFromFlexform('settings.categories'), true);
         if (count($categories) > 0) {
+            $categoriesOut = [];
+            foreach ($categories as $id) {
+                $categoriesOut[] = $this->getRecordData($id, 'sys_category');
+            }
+
+            $this->tableData[] = [
+                $this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.categories'),
+                implode(', ', $categoriesOut)
+            ];
 
             // Category mode
-            $categoryModeSelection = $this->getFieldFromFlexform('settings.categoryConjunction');
-
             if ($showCategoryMode) {
+                $categoryModeSelection = $this->getFieldFromFlexform('settings.categoryConjunction');
                 if (empty($categoryModeSelection)) {
                     $categoryMode = $this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.categoryConjunction.all');
                 } else {
                     $categoryMode = $this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.categoryConjunction.' . $categoryModeSelection);
                 }
 
-                $categoryMode = '<span style="font-weight:normal;font-style:italic">(' . htmlspecialchars($categoryMode) . ')</span>';
-            }
+                if (count($categories) > 0 && empty($categoryModeSelection)) {
+                    $categoryMode = $this->generateCallout($categoryMode);
+                } else {
+                    $categoryMode = htmlspecialchars($categoryMode);
+                }
 
-            // Category records
-            foreach ($categories as $id) {
-                $categoriesOut[] = $this->getRecordData($id, 'sys_category');
+                $this->tableData[] = [
+                    $this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.categoryConjunction'),
+                    $categoryMode
+                ];
             }
 
             $includeSubcategories = $this->getFieldFromFlexform('settings.includeSubCategories');
             if ($includeSubcategories) {
-                $categoryMode .= '<br />+ ' . htmlspecialchars($this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.includeSubCategories'));
+                $this->tableData[] = [
+                    $this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.includeSubCategories'),
+                    '<i class="fa fa-check"></i>'
+                ];
             }
-
-            $this->tableData[] = [
-                $this->getLanguageService()->sL(self::LLPATH . 'flexforms_general.categories') .
-                '<br />' . $categoryMode,
-                implode(', ', $categoriesOut)
-            ];
         }
     }
 
     /**
      * Get the restriction for tags
      *
-     * @return void
      */
     public function getTagRestrictionSetting()
     {
@@ -441,7 +436,6 @@ class PageLayoutView
     /**
      * Render offset & limit configuration
      *
-     * @return void
      */
     public function getOffsetLimitSettings()
     {
@@ -472,7 +466,6 @@ class PageLayoutView
     /**
      * Render date menu configuration
      *
-     * @return void
      */
     public function getDateMenuSettings()
     {
@@ -487,7 +480,6 @@ class PageLayoutView
     /**
      * Render time restriction configuration
      *
-     * @return void
      */
     public function getTimeRestrictionSetting()
     {
@@ -512,7 +504,6 @@ class PageLayoutView
     /**
      * Render top news restriction configuration
      *
-     * @return void
      */
     public function getTopNewsRestrictionSetting()
     {
@@ -529,7 +520,6 @@ class PageLayoutView
      * Render template layout configuration
      *
      * @param int $pageUid
-     * @return void
      */
     public function getTemplateLayoutSettings($pageUid)
     {
@@ -538,8 +528,9 @@ class PageLayoutView
 
         // Find correct title by looping over all options
         if (!empty($field)) {
-            foreach ($this->templateLayoutsUtility->getAvailableTemplateLayouts($pageUid) as $layout) {
-                if ($layout[1] === $field) {
+            $layouts = $this->templateLayoutsUtility->getAvailableTemplateLayouts($pageUid);
+            foreach ($layouts as $layout) {
+                if ((string)$layout[1] === (string)$field) {
                     $title = $layout[0];
                 }
             }
@@ -556,7 +547,6 @@ class PageLayoutView
     /**
      * Get information if override demand setting is disabled or not
      *
-     * @return void
      */
     public function getOverrideDemandSettings()
     {
@@ -566,7 +556,7 @@ class PageLayoutView
             $this->tableData[] = [
                 $this->getLanguageService()->sL(
                     self::LLPATH . 'flexforms_additional.disableOverrideDemand'),
-                ''
+                '<i class="fa fa-check"></i>'
             ];
         }
     }
@@ -574,7 +564,6 @@ class PageLayoutView
     /**
      * Get the startingpoint
      *
-     * @return void
      */
     public function getStartingPoint()
     {
@@ -603,7 +592,7 @@ class PageLayoutView
             }
 
             $this->tableData[] = [
-                $this->getLanguageService()->sL('LLL:EXT:lang/locallang_general.php:LGL.startingpoint'),
+                $this->getLanguageService()->sL('LLL:EXT:lang/locallang_general.xlf:LGL.startingpoint'),
                 implode(', ', $pagesOut) . $recursiveLevelText
             ];
         }
@@ -634,7 +623,11 @@ class PageLayoutView
     {
         $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
         $pageRenderer->loadRequireJsModule('TYPO3/CMS/News/PageLayout');
-        $pageRenderer->addCssFile(ExtensionManagementUtility::extRelPath('news') . 'Resources/Public/Css/Backend/PageLayoutView.css');
+        if (VersionNumberUtility::convertVersionNumberToInteger(TYPO3_branch) >= VersionNumberUtility::convertVersionNumberToInteger('8.4')) {
+            $pageRenderer->addCssFile('EXT:news/Resources/Public/Css/Backend/PageLayoutView.css');
+        } else {
+            $pageRenderer->addCssFile(ExtensionManagementUtility::extRelPath('news') . 'Resources/Public/Css/Backend/PageLayoutView.css');
+        }
 
         $view = GeneralUtility::makeInstance(StandaloneView::class);
         $view->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName('EXT:news/Resources/Private/Backend/PageLayoutView.html'));
@@ -679,7 +672,7 @@ class PageLayoutView
      * @param array $row Current record row from database.
      * @param int $currentPageUid current page uid
      * @return string Link to open an edit window for record.
-     * @see \TYPO3\CMS\Backend\Utility\BackendUtility::readPageAccess()
+     * @see \TYPO3\CMS\Backend\Utility\BackendUtilityCore::readPageAccess()
      */
     protected function getEditLink($row, $currentPageUid)
     {
@@ -687,11 +680,11 @@ class PageLayoutView
         $localCalcPerms = $GLOBALS['BE_USER']->calcPerms(BackendUtilityCore::getRecord('pages', $row['uid']));
         $permsEdit = $localCalcPerms & Permission::PAGE_EDIT;
         if ($permsEdit) {
-            $returnUrl = BackendUtilityCore::getModuleUrl('web_layout', array('id' => $currentPageUid));
-            $editLink = BackendUtilityCore::getModuleUrl('web_layout', array(
+            $returnUrl = BackendUtilityCore::getModuleUrl('web_layout', ['id' => $currentPageUid]);
+            $editLink = BackendUtilityCore::getModuleUrl('web_layout', [
                 'id' => $row['uid'],
                 'returnUrl' => $returnUrl
-            ));
+            ]);
         }
         return $editLink;
     }

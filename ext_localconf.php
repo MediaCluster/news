@@ -38,6 +38,18 @@ $boot = function () {
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_befunc.php']['getFlexFormDSClass']['news'] =
         \GeorgRinger\News\Hooks\BackendUtility::class;
 
+    // Modify flexform fields since core 8.5 via formEngine: Inject a data provider between TcaFlexPrepare and TcaFlexProcess
+    if (\TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger(TYPO3_version) >= 8005000) {
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['formDataGroup']['tcaDatabaseRecord'][\GeorgRinger\News\Backend\FormDataProvider\NewsFlexFormManipulation::class] = [
+            'depends' => [
+                \TYPO3\CMS\Backend\Form\FormDataProvider\TcaFlexPrepare::class,
+            ],
+            'before' => [
+                \TYPO3\CMS\Backend\Form\FormDataProvider\TcaFlexProcess::class,
+            ],
+        ];
+    }
+
     // Hide content elements in page module for 7
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['typo3/class.db_list.inc']['makeQueryArray']['news'] =
         \GeorgRinger\News\Hooks\Backend\RecordListQueryHook::class;
@@ -48,6 +60,11 @@ $boot = function () {
     // Inline records hook
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tceforms_inline.php']['tceformsInlineHook']['news'] =
         \GeorgRinger\News\Hooks\InlineElementHook::class;
+
+    // Xclass InlineRecordContainer
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects'][\TYPO3\CMS\Backend\Form\Container\InlineRecordContainer::class] = [
+        'className' => \GeorgRinger\News\Xclass\InlineRecordContainerForNews::class,
+    ];
 
     /* ===========================================================================
         Custom cache, done with the caching framework
@@ -68,6 +85,10 @@ $boot = function () {
     if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('linkvalidator')) {
         \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig('<INCLUDE_TYPOSCRIPT: source="FILE:EXT:news/Configuration/TSconfig/Page/mod.linkvalidator.txt">');
     }
+    if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('guide')) {
+        \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig('  <INCLUDE_TYPOSCRIPT: source="DIR:EXT:news/Configuration/TSconfig/Tours" extensions="ts">');
+    }
+
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig('<INCLUDE_TYPOSCRIPT: source="FILE:EXT:news/Configuration/TSconfig/ContentElementWizard.txt">');
 
     /* ===========================================================================
@@ -104,6 +125,7 @@ $boot = function () {
             'ext-news-wizard-icon' => 'plugin_wizard.svg',
             'ext-news-type-default' => 'news_domain_model_news.svg',
             'ext-news-type-internal' => 'news_domain_model_news_internal.svg',
+            'ext-news-type-external' => 'news_domain_model_news_external.svg',
             'ext-news-tag' => 'news_domain_model_tag.svg',
             'ext-news-link' => 'news_domain_model_link.svg'
         ];
@@ -121,6 +143,8 @@ $boot = function () {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['dd_googlesitemap']['sitemap']['txnews']
             = \GeorgRinger\News\Hooks\TxNewsSitemapGenerator::class . '->main';
     }
+
+    $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['extbase']['commandControllers'][] = \GeorgRinger\News\Command\NewsImportCommandController::class;
 };
 
 $boot();

@@ -3,29 +3,25 @@
 namespace GeorgRinger\News\Tests\Unit\Functional\ViewHelpers;
 
 /**
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the "news" Extension for TYPO3 CMS.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
  */
 use DateTime;
 use GeorgRinger\News\Domain\Model\News;
+use Nimut\TestingFramework\MockObject\AccessibleMockObjectInterface;
+use Nimut\TestingFramework\TestCase\FunctionalTestCase;
 use TYPO3\CMS\Core\Database\DatabaseConnection;
 
 /**
  * Class SimplePrevNextViewHelperTest
  *
  */
-class SimplePrevNextViewHelperTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase
+class SimplePrevNextViewHelperTest extends FunctionalTestCase
 {
 
-    /** @var \PHPUnit_Framework_MockObject_MockObject|\TYPO3\CMS\Core\Tests\AccessibleObjectInterface|\GeorgRinger\News\ViewHelpers\SimplePrevNextViewHelper */
+    /** @var \PHPUnit_Framework_MockObject_MockObject|AccessibleMockObjectInterface|\GeorgRinger\News\ViewHelpers\SimplePrevNextViewHelper */
     protected $mockedViewHelper;
 
     /** @var \GeorgRinger\News\Domain\Model\News */
@@ -47,7 +43,6 @@ class SimplePrevNextViewHelperTest extends \TYPO3\CMS\Core\Tests\FunctionalTestC
 
     /**
      * @test
-     * @return void
      */
     public function allNeighboursCanBeFound()
     {
@@ -64,7 +59,6 @@ class SimplePrevNextViewHelperTest extends \TYPO3\CMS\Core\Tests\FunctionalTestC
 
     /**
      * @test
-     * @return void
      */
     public function nextNeighbourCanBeFound()
     {
@@ -80,7 +74,6 @@ class SimplePrevNextViewHelperTest extends \TYPO3\CMS\Core\Tests\FunctionalTestC
 
     /**
      * @test
-     * @return void
      */
     public function previousNeighbourCanBeFound()
     {

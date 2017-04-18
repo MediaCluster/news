@@ -35,6 +35,7 @@ Properties
 	manualSorting_                        records                               0
 	dateTimeNotRequired_                  records                               fal
 	showAdministrationModule_             backend modules                       0
+	hidePageTreeForAdministrationModule_  backend modules                       0
 	showImporter_                         import module                         0
 	storageUidImporter_                   import module
 	resourceFolderImporter_               import module                         /news_import
@@ -83,7 +84,9 @@ If set and a news record is copied, the news record will be prepended with the s
 
 categoryRestriction
 """""""""""""""""""
-Define an additional constraint for the categories inside a news record. Possible options are:
+Define an additional constraint for the categories inside a news record. To use this constraint for the news plugins as well, take a look at the  :ref:`TsConfig configuration <tsconfigCategoryRestrictionForFlexForms>`.
+
+Possible options are:
 
 .. only:: html
 
@@ -158,6 +161,13 @@ showAdministrationModule
 If set, the backend module "News" is shown.This view might be easier for editors who use a very limited set of features in the backend.
 
 .. _extensionManagerShowImporter:
+
+.. _extensionManagerHidePageTreeForAdministrationModule:
+
+hidePageTreeForAdministrationModule
+"""""""""""""""""""""""""""""""""""
+
+If set, the backend module "News" is shown without the page tree. In combination with the TsConfig `redirectToPageOnStart` you can achieve a very simple workflow for editors if those need only to create news records.
 
 showImporter
 """"""""""""

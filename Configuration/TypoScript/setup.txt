@@ -24,11 +24,11 @@ plugin.tx_news {
 	}
 
 	# Modify the translation
-	_LOCAL_LANG {
-		default {
-			# read_more = more >>
-		}
-	}
+	#_LOCAL_LANG {
+	#	default {
+	#		more-link = more >>
+	#	}
+	#}
 
 	# ====================================
 	# Settings available inside Controller and View by accessing $this->settings or {settings.xyz}
@@ -97,7 +97,7 @@ plugin.tx_news {
 		#  Detail
 		# --------------
 		detail {
-			errorHandling = pageNotFoundHandler
+			errorHandling = showStandaloneTemplate,EXT:news/Resources/Private/Templates/News/DetailNotFound.html,404
 			checkPidOfNewsRecord = 0
 			registerProperties = keywords,title
 			showPrevNext = 0
@@ -236,6 +236,9 @@ tt_content.shortcut.variables.shortcuts.conf.tx_news_domain_model_news < tt_cont
 # BE-module configuration for EXT:news
 # ==============================================
 module.tx_news < plugin.tx_news
+module.tx_news {
+	settings.list.paginate.itemsPerPage = 25
+}
 
 # ==============================================
 # Persistence object mapping configuration
