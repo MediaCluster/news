@@ -39,6 +39,9 @@ use TYPO3\CMS\Core\Database\DatabaseConnection;
  *    </f:if>
  * </n:simplePrevNext>
  *
+ * The attributes includeExternalType & includeInternalType allow to include internal and
+ * external news types.
+ *
  * </code>
  * <output>
  *  Menu with 2 li items with the link to the previous and next news item.
@@ -84,6 +87,8 @@ class SimplePrevNextViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstract
         $this->registerArgument('pidList', 'string', 'pid list', false, '');
         $this->registerArgument('sortField', 'string', 'sort field', false, 'datetime');
         $this->registerArgument('as', 'string', 'as', true);
+        $this->registerArgument('includeInternalType', 'boolean', 'Include internal news types');
+        $this->registerArgument('includeExternalType', 'bool', 'Include external news types');
     }
 
     /**
@@ -110,6 +115,7 @@ class SimplePrevNextViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstract
      */
     protected function mapResultToObjects(array $result)
     {
+        $out = [];
         foreach ($result as $_id => $single) {
             $out[$_id] = $this->getObject($single['uid']);
         }
@@ -157,11 +163,19 @@ class SimplePrevNextViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstract
      */
     protected function getEnableFieldsWhereClauseForTable()
     {
+        $whereClause = '';
         if (is_object($GLOBALS['TSFE']) && is_object($GLOBALS['TSFE']->sys_page)) {
-            return $GLOBALS['TSFE']->sys_page->enableFields('tx_news_domain_model_news');
+            $whereClause = $GLOBALS['TSFE']->sys_page->enableFields('tx_news_domain_model_news');
         }
 
-        return '';
+        if ((bool)$this->arguments['includeInternalType'] === false) {
+            $whereClause .= ' AND tx_news_domain_model_news.type !="1"';
+        }
+        if ((bool)$this->arguments['includeExternalType'] === false) {
+            $whereClause .= ' AND tx_news_domain_model_news.type !="2"';
+        }
+
+        return $whereClause;
     }
 
     /**
@@ -174,6 +188,7 @@ class SimplePrevNextViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstract
     {
         $data = [];
         $pidList = empty($pidList) ? $news->getPid() : $pidList;
+        $tableName = 'tx_news_domain_model_news';
 
         foreach (['prev', 'next'] as $label) {
             $whereClause = 'sys_language_uid = 0 AND pid IN(' . $this->databaseConnection->cleanIntList($pidList) . ') '
@@ -188,10 +203,14 @@ class SimplePrevNextViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstract
                     $order = 'asc';
             }
             $getter = 'get' . ucfirst($sortField) . '';
-            $whereClause .= sprintf(' AND %s %s %s', $sortField, $selector, $news->$getter()->getTimeStamp());
+            if ($news->$getter() instanceof \DateTime) {
+                $whereClause .= sprintf(' AND %s %s %s', $sortField, $selector, $news->$getter()->getTimestamp());
+            } else {
+                $whereClause .= sprintf(' AND %s %s "%s"', $sortField, $selector, $this->getDb()->quoteStr($news->$getter(), $tableName));
+            }
             $row = $this->getDb()->exec_SELECTgetSingleRow(
                 '*',
-                'tx_news_domain_model_news',
+                $tableName,
                 $whereClause,
                 '',
                 $sortField . ' ' . $order);
